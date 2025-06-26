@@ -1,0 +1,54 @@
+# nginx proxy address - http://172.17.0.1:60028
+
+name: localpaste
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  app:
+    image: girish946/local-paste:latest
+    container_name: localpaste-app
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}}
+      LOCALPASTE_DB: /data/db
+    ports:
+      - '172.17.0.1:60028:8000'
+    volumes:
+      - './rootfs/database/sqlite:/data/deb'
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'cloudflare.hostname=localpaste-app.${CLOUDFLARE_ZONE_NAME}'
+      - 'cloudflare.service=http://localpaste-app:8000'
+      - 'traefik.docker.network=proxy'
+      - 'traefik.http.routers.localpaste-app.entrypoints=http'
+      - 'traefik.http.routers.localpaste-app-secure.tls=true'
+      - 'traefik.http.routers.localpaste-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.localpaste-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.localpaste-app.middlewares=localpaste-app-https-redirect'
+      - 'traefik.http.routers.localpaste-app-secure.entrypoints=https'
+      - 'traefik.http.routers.localpaste-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.localpaste-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.localpaste-app-secure.service=localpaste-app'
+      - 'traefik.http.services.localpaste-app.loadbalancer.server.port=8000'
+    networks:
+      - localpaste
+      - proxy
+      - cloudflared
+
+networks:
+  localpaste:
+    name: localpaste
+    external: false
+  proxy:
+    external: true
+  cloudflared:
+    external: true
