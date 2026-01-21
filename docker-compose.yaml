@@ -1,0 +1,32 @@
+# nginx proxy address - http://172.17.0.1:60028
+
+name: localpaste
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  app:
+    image: girish946/local-paste:latest
+    container_name: localpaste-app
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+      LOCALPASTE_DB: /data/db
+    ports:
+      - '172.17.0.1:60028:8000'
+    volumes:
+      - './rootfs/data/localpaste:/data/db'
+    networks:
+      - localpaste
+
+networks:
+  localpaste:
+    name: localpaste
+    external: false
