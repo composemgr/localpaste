@@ -22,7 +22,7 @@ services:
     ports:
       - '172.17.0.1:60028:8000'
     volumes:
-      - './rootfs/data/localpaste:/data/db'
+      - './volumes/data/localpaste:/data/db'
     networks:
       - localpaste
 
