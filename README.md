@@ -45,7 +45,7 @@ See `docker-compose.yaml` for complete list of configurable options.
 
 ## 📂 Volumes
 
-- `./rootfs/data/localpaste` - Data storage
+- `./volumes/data/localpaste` - Data storage
 
 ## 🔍 Logging
 
