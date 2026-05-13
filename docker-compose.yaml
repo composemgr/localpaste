@@ -17,6 +17,7 @@ services:
     logging: *default-logging
     environment:
       TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: localpaste-app
       HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
       LOCALPASTE_DB: /data/db
     ports:
@@ -25,8 +26,30 @@ services:
       - './volumes/data/localpaste:/data/db'
     networks:
       - localpaste
+      - proxy
+      - cloudflare
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://localpaste-app:8000'
+      - 'cloudflare.hostname=localpaste.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.localpaste-app.entrypoints=http'
+      - 'traefik.http.routers.localpaste-app-secure.tls=true'
+      - 'traefik.http.routers.localpaste-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.localpaste-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.localpaste-app.middlewares=localpaste-app-https-redirect'
+      - 'traefik.http.routers.localpaste-app-secure.entrypoints=https'
+      - 'traefik.http.routers.localpaste-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.localpaste-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.localpaste-app-secure.service=localpaste-app'
+      - 'traefik.http.services.localpaste-app.loadbalancer.server.port=8000'
 
 networks:
   localpaste:
     name: localpaste
     external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
