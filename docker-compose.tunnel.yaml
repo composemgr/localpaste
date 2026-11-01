@@ -1,0 +1,38 @@
+# nginx proxy address - http://172.17.0.1:64239
+name: localpaste
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  app:
+    image: girish946/local-paste:latest
+    container_name: localpaste-app
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: localpaste-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+      LOCALPASTE_DB: /data/db
+    volumes:
+      - './volumes/data/localpaste:/data/db'
+    labels:
+      - 'cloudflare.enable=true'
+      - 'cloudflare.service=http://localpaste-app:8000'
+      - 'cloudflare.hostname=${BASE_HOST_NAME:-$HOSTNAME}'
+    networks:
+      - localpaste
+      - cloudflare
+
+networks:
+  localpaste:
+    name: localpaste
+    external: false
+  cloudflare:
+    external: true
