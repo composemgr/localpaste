@@ -21,6 +21,12 @@ services:
       CONTAINER_NAME: localpaste-app
       HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
       LOCALPASTE_DB: /data/db
+    healthcheck:
+      test: ['CMD', 'nc', '-z', '127.0.0.1', '8000']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     ports:
       - '172.17.0.1:64239:8000'
     volumes:
